@@ -1,0 +1,3 @@
+# Scratchpads are files that are supposed to have tests and experiments, work
+# in progress hence they are not commited into the repository
+*.d/999scratchpad.sh
