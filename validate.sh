@@ -35,7 +35,6 @@ function validate-files() {
     # that file as an argument list.
     printf "%s\n" "${file_list[@]}" \
         | grep -v '^profile.d/000-functions-for-environment-variables.sh$' \
-        | grep -v '^profile.d/012-path-rbenv.sh$' \
         > "$files_path"
 
     readarray -t files < "$files_path"
