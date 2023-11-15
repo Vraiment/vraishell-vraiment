@@ -17,30 +17,15 @@ function ensure-shellcheck() {
 }
 
 function validate-files() {
-    local file_list files_path files
+    local files
 
-    file_list=(
+    files=(
         validate.sh # Validate first the validate script itself
-        bash_profile.d/*
+        # bash_profile.d/* # TODO: Uncomment this when a script is added there
         bashrc.d/*
         profile.d/*
     )
-    readonly file_list
-
-    files_path=$(mktemp)
-    readonly files_path
-
-    # I need a mechanism to skip files and Bash, asinine as it is, requires a very convoluted
-    # way to acomplish it, put them into a file skipping the ones I don't want and then use
-    # that file as an argument list.
-    printf "%s\n" "${file_list[@]}" \
-        | grep -v '^profile.d/000-functions-for-environment-variables.sh$' \
-        > "$files_path"
-
-    readarray -t files < "$files_path"
     readonly files
-
-    rm "$files_path"
 
     shellcheck "${files[@]}"
 }
