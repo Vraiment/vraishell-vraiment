@@ -1,26 +1,20 @@
-# -----------------------------------------------------------------------------#
-#  Author: Vraiment                                                            #
-#                                                                              #
-# These are a set of useful shell functions/commands to manage environment     #
-# variables that contain a list of things, the main example would be the $PATH #
-# variable, but is not limited to that (ex: Java's $CLASSPATH)                 #
-# -----------------------------------------------------------------------------#
+#!/bin/sh
 
 # Lists the entries in the variable with the name of the first argument
 # ex: lsevar PATH
-function lsevar {
-    if [[ $# -ne 1 || -z ${!1+x} ]]; then
-        return "$(false)"
+lsevar() {
+    if [ $# -ne 1 ] || [ -z "$(eval echo \$"$1")" ]; then
+        return 1
     fi
 
-    echo "${!1}" | tr ':' "\n"
+    eval echo \$"$1" | tr ':' "\n"
 }
 
 # Verifies if the second argument is in the variable with the name of the first argument
 # ex: grepevar PATH /bin
-function grepevar {
+grepevar() {
     if [ $# -ne 2 ]; then
-        return "$(false)"
+        return 1
     fi
 
     lsevar "$1" | grep "^$2$"
@@ -28,75 +22,78 @@ function grepevar {
 
 # Adds a new entry in the environment variable at the beginning of the variable
 # ex: evarprepend PATH $HOME/bin
-function evarprepend {
+evarprepend() {
     if [ $# -ne 2 ]; then
-        return "$(false)"
+        return 1
     fi
 
-    if [ -z "${!1}" ]; then
+    if [ -z "$(eval echo \$"$1")" ]; then
         eval "$1=\$2"
     else
-        eval "$1=\$2:\${!1}"
+        eval "$1=\$2:\"\$$1\""
     fi
 }
 
 # Adds a new entry in the environment variable at the beginning of the variable
 # ex: evarappend PATH $HOME/bin
-function evarappend {
+evarappend() {
     if [ $# -ne 2 ]; then
-        return "$(false)"
+        return 1
     fi
 
-    if [ -z "${!1}" ]; then
+    if [ -z "$(eval echo \$"$1")" ]; then
         eval "$1=\$2"
     else
-        eval "$1=\${!1}:\$2"
+        eval "$1=\"\$$1\":\$2"
     fi
 }
 
 # Removes all duplicate entries from the environment variable leaving the first appearance
 # ex: uniqevar PATH
-function uniqevar {
-    if [[ $# -ne 1 || -z ${!1+x} ]]; then
-        return "$(false)"
+uniqevar() {
+    if [ $# -ne 1 ] || [ -z "$(eval echo \$"$1")" ]; then
+        return 1
     fi
 
-    local entries
-    for entry in $(lsevar "$1"); do
-        if (grepevar entries "$entry") > /dev/null; then
+    _entries=''
+    for _entry in $(lsevar "$1"); do
+        if (grepevar _entries "$_entry") > /dev/null; then
             continue
         fi
 
-        evarappend entries "$entry"
+        evarappend _entries "$_entry"
     done
+    unset _entry
 
-    eval "$1=\$entries"
+    eval "$1=\$_entries"
+
+    unset _entries
 }
 
 # PATH related commands
 
 # Lists the entries in the PATH variable
 # ex: lspath
-function lspath {
+lspath() {
     lsevar PATH
 }
 
 # Verifies if the second argument is in the PATH variable
 # ex: greppath /bin
-function greppath {
+greppath() {
     grepevar PATH "$1"
 }
 
 # Removes all duplicate entries from the PATH environment variable leaving the first appearance
 # ex: uniqpath
-function uniqpath {
+uniqpath() {
     uniqevar PATH
 }
 
 # Adds the first argument to the front of PATH if is not present
 # ex: pathprepend $HOME/bin
-function pathprepend {
-    if [[ $# -ne 1 || $(greppath "$1") ]]; then
+pathprepend() {
+    if [ $# -ne 1 ] || greppath "$1" > /dev/null; then
         return 1
     fi
 
@@ -105,8 +102,8 @@ function pathprepend {
 
 # Adds the first argument to the back of PATH if is not present
 # ex: pathappend /usr/local/bin
-function pathappend {
-    if [[ $# -ne 1 || $(greppath "$1") ]]; then
+pathappend() {
+    if [ $# -ne 1 ] || greppath "$1" > /dev/null; then
         return 1
     fi
 
